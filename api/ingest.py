@@ -1,12 +1,11 @@
 from http.server import BaseHTTPRequestHandler
 import json, os, io, httpx
 from pypdf import PdfReader
-from openai import OpenAI
 from supabase import create_client
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+VOYAGE_API_KEY = os.environ["VOYAGE_API_KEY"]
 
 CHUNK_TOKENS = 500
 OVERLAP_TOKENS = 50
@@ -41,9 +40,14 @@ def chunk_text(pages: list[tuple[int, str]]) -> list[dict]:
 
 
 def embed_batch(texts: list[str]) -> list[list[float]]:
-    client = OpenAI(api_key=OPENAI_API_KEY)
-    response = client.embeddings.create(model="text-embedding-3-small", input=texts)
-    return [item.embedding for item in response.data]
+    resp = httpx.post(
+        "https://api.voyageai.com/v1/embeddings",
+        headers={"Authorization": f"Bearer {VOYAGE_API_KEY}", "Content-Type": "application/json"},
+        json={"input": texts, "model": "voyage-3"},
+        timeout=60.0,
+    )
+    resp.raise_for_status()
+    return [d["embedding"] for d in resp.json()["data"]]
 
 
 def process_document(blob_url: str, filename: str, document_id: str, session_id: str) -> None:
