@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "api/ingest.py": {
+      "runtime": "vercel-python@3.13.x",
+      "maxDuration": 120
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cleanup",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}
