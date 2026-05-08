@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const blob = await put(`sessions/${sessionId}/${Date.now()}-${file.name}`, file, {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false,
     })
 

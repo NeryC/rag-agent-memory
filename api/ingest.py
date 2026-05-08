@@ -6,6 +6,7 @@ from supabase import create_client
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 VOYAGE_API_KEY = os.environ["VOYAGE_API_KEY"]
+BLOB_READ_WRITE_TOKEN = os.environ.get("BLOB_READ_WRITE_TOKEN", "")
 
 CHUNK_TOKENS = 500
 OVERLAP_TOKENS = 50
@@ -53,7 +54,8 @@ def embed_batch(texts: list[str]) -> list[list[float]]:
 def process_document(blob_url: str, filename: str, document_id: str, session_id: str) -> None:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-    resp = httpx.get(blob_url, follow_redirects=True, timeout=60.0)
+    headers = {"Authorization": f"Bearer {BLOB_READ_WRITE_TOKEN}"} if BLOB_READ_WRITE_TOKEN else {}
+    resp = httpx.get(blob_url, headers=headers, follow_redirects=True, timeout=60.0)
     resp.raise_for_status()
 
     reader = PdfReader(io.BytesIO(resp.content))
