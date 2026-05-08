@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { put } from '@vercel/blob'
 import { createServerClient } from '@/lib/supabase'
 import { getOrCreateSessionId, sessionCookieOptions } from '@/lib/session'
@@ -45,17 +46,19 @@ export async function POST(req: NextRequest) {
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Fire-and-forget: trigger Python ingestion
-    fetch(INGEST_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        blob_url: blob.url,
-        filename: file.name,
-        document_id: doc.id,
-        session_id: sessionId,
-      }),
-    }).catch(console.error)
+    // Trigger Python ingestion after response is sent (keeps serverless fn alive)
+    after(async () => {
+      await fetch(INGEST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blob_url: blob.url,
+          filename: file.name,
+          document_id: doc.id,
+          session_id: sessionId,
+        }),
+      }).catch(console.error)
+    })
 
     const cookieStore = await cookies()
     const response = NextResponse.json({ document_id: doc.id, status: 'processing' })
