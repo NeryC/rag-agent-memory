@@ -1,38 +1,66 @@
 import { createServerClient } from '@/lib/supabase'
-
-// Polyfill DOMMatrix for pdfjs-dist in Node.js serverless environment
-if (typeof globalThis.DOMMatrix === 'undefined') {
-  ;(globalThis as Record<string, unknown>).DOMMatrix = class {
-    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0
-    m11 = 1; m12 = 0; m13 = 0; m14 = 0
-    m21 = 0; m22 = 1; m23 = 0; m24 = 0
-    m31 = 0; m32 = 0; m33 = 1; m34 = 0
-    m41 = 0; m42 = 0; m43 = 0; m44 = 1
-    is2D = true; isIdentity = true
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    constructor(_init?: string | number[]) {}
-    multiply() { return this }
-    inverse() { return this }
-    scale() { return this }
-    translate() { return this }
-    rotate() { return this }
-    rotateAxisAngle() { return this }
-    skewX() { return this }
-    skewY() { return this }
-    flipX() { return this }
-    flipY() { return this }
-    transformPoint(p: { x?: number; y?: number }) { return { x: p.x ?? 0, y: p.y ?? 0, z: 0, w: 1 } }
-    toFloat32Array() { return new Float32Array(16) }
-    toFloat64Array() { return new Float64Array(16) }
-    toJSON() { return {} }
-    toString() { return 'matrix(1, 0, 0, 1, 0, 0)' }
-  }
-}
+import { inflateSync } from 'zlib'
 
 const CHUNK_TOKENS = 500
 const OVERLAP_TOKENS = 50
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY!
 const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN ?? ''
+
+/**
+ * Extract text from a PDF buffer.
+ * Handles both plain and FlateDecode (zlib) compressed content streams.
+ * Works in any Node.js environment without browser API dependencies.
+ */
+function extractPdfText(buffer: Buffer): string {
+  const raw = buffer.toString('latin1')
+  const texts: string[] = []
+
+  const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g
+  let m: RegExpExecArray | null
+
+  while ((m = streamRegex.exec(raw)) !== null) {
+    const streamStart = m.index
+    const streamData = m[1]
+
+    // Check the preceding object dict for compression filter
+    const preceding = raw.slice(Math.max(0, streamStart - 500), streamStart)
+    const isFlate = preceding.includes('FlateDecode')
+
+    let content: string
+    if (isFlate) {
+      try {
+        const compressed = Buffer.from(streamData, 'latin1')
+        const decompressed = inflateSync(compressed)
+        content = decompressed.toString('utf8')
+      } catch {
+        continue // skip unreadable compressed streams
+      }
+    } else {
+      content = streamData
+    }
+
+    if (!content.includes('Tj') && !content.includes('TJ')) continue
+
+    // Extract from Tj operator: (text) Tj
+    for (const t of content.matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g)) {
+      const s = t[1]
+        .replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t')
+        .replace(/\\\(/g, '(').replace(/\\\)/g, ')').replace(/\\\\/g, '\\')
+        .replace(/\\(\d{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
+      if (s.trim()) texts.push(s)
+    }
+
+    // Extract from TJ operator: [(text) offset ...] TJ
+    for (const t of content.matchAll(/\[([^\]]+)\]\s*TJ/g)) {
+      for (const p of t[1].matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)/g)) {
+        const s = p[1].replace(/\\n/g, '\n')
+        if (s.trim()) texts.push(s)
+      }
+    }
+  }
+
+  return texts.join(' ').replace(/\s+/g, ' ').trim()
+}
 
 function roughTokenCount(text: string): number {
   return Math.max(1, Math.floor(text.length / 4))
@@ -95,18 +123,17 @@ export async function processDocument(
     if (!blobRes.ok) throw new Error(`Blob fetch failed: ${blobRes.status}`)
 
     const pdfBuffer = Buffer.from(await blobRes.arrayBuffer())
+    const fullText = extractPdfText(pdfBuffer)
 
-    // Parse PDF with pdf-parse (dynamic import to avoid Next.js build issues)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse: (buffer: Buffer) => Promise<{ text: string; numpages: number }> = require('pdf-parse')
-    const pdfData = await pdfParse(pdfBuffer)
+    if (!fullText || fullText.length < 10) {
+      console.error(`[ingest] No text extracted from ${filename} (${pdfBuffer.length} bytes)`)
+      await supabase.from('documents').update({ status: 'error' }).eq('id', documentId)
+      return
+    }
 
-    // pdf-parse gives us all text; split by pages using npage info
-    // For simplicity, treat the entire text as page 1 (single-page approach)
-    const fullText = pdfData.text
     const pages = [{ pageNum: 1, text: fullText }]
-
     const chunks = chunkText(pages)
+
     if (chunks.length === 0) {
       await supabase.from('documents').update({ status: 'error' }).eq('id', documentId)
       return
@@ -120,7 +147,7 @@ export async function processDocument(
       allEmbeddings.push(...batch)
     }
 
-    // Insert chunks
+    // Insert chunks into Supabase
     const rows = chunks.map((chunk, idx) => ({
       document_id: documentId,
       session_id: sessionId,
@@ -135,6 +162,8 @@ export async function processDocument(
       .from('documents')
       .update({ status: 'ready', chunk_count: rows.length })
       .eq('id', documentId)
+
+    console.log(`[ingest] ${filename}: ${chunks.length} chunks ingested`)
   } catch (err) {
     console.error('[ingest] error:', err)
     await supabase.from('documents').update({ status: 'error' }).eq('id', documentId)
