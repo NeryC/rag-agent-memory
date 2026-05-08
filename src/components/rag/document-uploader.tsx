@@ -127,10 +127,9 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
                          transition-colors duration-300 ease-out
                          ${doc.status === 'processing' ? 'skeleton border border-white/5' : 'bg-muted/40'}`}
               style={{
-                // Use shimmer for processing rows; slide-in for ready/error rows
-                animation: doc.status === 'processing'
-                  ? 'shimmer 1.5s ease-in-out infinite'
-                  : 'doc-slide-in 0.25s ease-out',
+                // Only set doc-slide-in for non-processing rows;
+                // processing rows get shimmer from the .skeleton CSS class.
+                animation: doc.status !== 'processing' ? 'doc-slide-in 0.25s ease-out' : undefined,
               }}
             >
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />

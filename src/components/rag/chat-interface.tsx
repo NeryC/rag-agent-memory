@@ -148,6 +148,15 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
     )
   }
 
+  // True when the last assistant message is still empty — skeleton bubble is showing.
+  // While the skeleton is visible we suppress the ToolCallIndicator and typing indicator
+  // to avoid showing two simultaneous "loading" signals.
+  const hasSkeletonBubble =
+    streaming &&
+    messages.length > 0 &&
+    messages[messages.length - 1]?.role === 'assistant' &&
+    messages[messages.length - 1]?.content === '';
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages area — aria-live so screen readers announce new messages */}
@@ -225,9 +234,9 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
           );
         })}
 
-        {/* Tool call indicator or typing indicator */}
-        {streaming && activeTool && <ToolCallIndicator activeTool={activeTool} />}
-        {streaming && !activeTool && (
+        {/* Tool call indicator or typing indicator — suppressed while skeleton bubble is active */}
+        {streaming && activeTool && !hasSkeletonBubble && <ToolCallIndicator activeTool={activeTool} />}
+        {streaming && !activeTool && !hasSkeletonBubble && (
           /* Typing indicator: 3 animated dots when the model is generating text */
           <div className="flex justify-start" aria-label="Assistant is typing">
             <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">

@@ -120,4 +120,8 @@ body {
     opacity: 1;
     transform: none;
   }
+  /* Suppress Tailwind's animate-spin (used on Loader2 spinners) */
+  .animate-spin {
+    animation: none;
+  }
 }
