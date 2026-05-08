@@ -5,7 +5,7 @@ export async function embed(text: string): Promise<number[]> {
       'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ input: text, model: 'voyage-3' }),
+    body: JSON.stringify({ input: text, model: 'voyage-3', input_type: 'query' }),
   })
   if (!response.ok) {
     throw new Error(`Voyage AI error: ${response.status}`)

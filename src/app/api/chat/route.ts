@@ -97,13 +97,13 @@ export async function POST(req: NextRequest) {
   const [docResult, memResult] = await Promise.all([
     supabase.rpc('match_chunks', {
       query_embedding: queryEmbedding,
-      match_threshold: 0.5,
+      match_threshold: 0.25,
       match_count: 5,
       p_session_id: sessionId,
     }),
     supabase.rpc('match_memories', {
       query_embedding: queryEmbedding,
-      match_threshold: 0.6,
+      match_threshold: 0.3,
       match_count: 3,
       p_session_id: sessionId,
     }),
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
         const qEmb = await embed(input.query)
         const { data } = await supabase.rpc('match_chunks', {
           query_embedding: qEmb,
-          match_threshold: 0.4,
+          match_threshold: 0.2,
           match_count: 5,
           p_session_id: sessionId,
         })

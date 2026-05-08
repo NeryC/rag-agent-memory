@@ -44,7 +44,7 @@ def embed_batch(texts: list[str]) -> list[list[float]]:
     resp = httpx.post(
         "https://api.voyageai.com/v1/embeddings",
         headers={"Authorization": f"Bearer {VOYAGE_API_KEY}", "Content-Type": "application/json"},
-        json={"input": texts, "model": "voyage-3"},
+        json={"input": texts, "model": "voyage-3", "input_type": "document"},
         timeout=60.0,
     )
     resp.raise_for_status()
