@@ -188,20 +188,42 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
           </div>
         )}
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-              msg.role === 'user'
-                ? 'bg-primary text-primary-foreground rounded-br-sm'
-                : 'bg-muted rounded-bl-sm'
-            }`}>
-              {msg.role === 'assistant' && msg.memories && msg.memories.length > 0 && (
-                <MemoryViewer memories={msg.memories} />
+        {messages.map((msg, i) => {
+          // Show a skeleton bubble for the empty assistant message during the
+          // initial wait before any token/tool arrives.
+          const isEmptyAssistant =
+            msg.role === 'assistant' && msg.content === '' && streaming && i === messages.length - 1;
+
+          return (
+            <div
+              key={i}
+              className={`flex animate-slide-up ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              style={{
+                // animationDelay cannot be expressed as a Tailwind class with a dynamic value;
+                // inline style is intentional, not an oversight.
+                animationDelay: `${Math.min(i * 30, 150)}ms`,
+              }}
+            >
+              {isEmptyAssistant ? (
+                /* Skeleton bubble while waiting for the first token */
+                <div className="max-w-[60%] rounded-2xl rounded-bl-sm overflow-hidden">
+                  <div className="skeleton h-10 w-48" />
+                </div>
+              ) : (
+                <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
+                  msg.role === 'user'
+                    ? 'bg-primary text-primary-foreground rounded-br-sm'
+                    : 'bg-muted rounded-bl-sm'
+                }`}>
+                  {msg.role === 'assistant' && msg.memories && msg.memories.length > 0 && (
+                    <MemoryViewer memories={msg.memories} />
+                  )}
+                  {renderContent(msg.content, msg.citations)}
+                </div>
               )}
-              {renderContent(msg.content, msg.citations)}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Tool call indicator or typing indicator */}
         {streaming && activeTool && <ToolCallIndicator activeTool={activeTool} />}

@@ -123,9 +123,15 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
           {documents.map(doc => (
             <li
               key={doc.id}
-              className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-muted/40
-                         transition-all duration-300 ease-out"
-              style={{ animation: 'doc-slide-in 0.25s ease-out' }}
+              className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg
+                         transition-colors duration-300 ease-out
+                         ${doc.status === 'processing' ? 'skeleton border border-white/5' : 'bg-muted/40'}`}
+              style={{
+                // Use shimmer for processing rows; slide-in for ready/error rows
+                animation: doc.status === 'processing'
+                  ? 'shimmer 1.5s ease-in-out infinite'
+                  : 'doc-slide-in 0.25s ease-out',
+              }}
             >
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="flex-1 truncate text-xs">{doc.filename}</span>
