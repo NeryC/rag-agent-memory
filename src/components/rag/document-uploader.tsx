@@ -1,6 +1,6 @@
 'use client'
 import { useState, useCallback, useRef } from 'react'
-import { Upload, FileText, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
+import { Upload, FileText, CheckCircle, Loader2, AlertCircle, Files } from 'lucide-react'
 import type { Document } from '@/lib/types'
 
 interface DocumentUploaderProps {
@@ -57,6 +57,12 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
 
   return (
     <div className="space-y-3">
+      {/* Section header */}
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+        <Files className="h-4 w-4 text-muted-foreground" />
+        <span>Your Documents</span>
+      </div>
+
       {/* Hidden file input — triggered programmatically via ref */}
       <input
         ref={fileInputRef}
@@ -67,34 +73,43 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
           const file = e.target.files?.[0]
           if (file) {
             handleFile(file)
-            // Reset value so the same file can be re-selected
+            // Reset so the same file can be re-selected
             e.target.value = ''
           }
         }}
       />
+
+      {/* Drop zone */}
       <div
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={handleClick}
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
           dragging
             ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/30 hover:border-primary/50'
+            : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/20'
         }`}
       >
-        {uploading
-          ? <Loader2 className="h-8 w-8 mx-auto text-primary animate-spin" />
-          : <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-        }
-        <p className="mt-2 text-sm text-muted-foreground">
-          {uploading ? 'Uploading…' : 'Drop a PDF here or click to browse'}
-        </p>
-        <p className="text-xs text-muted-foreground/60 mt-1">
-          Max 5 documents · Deleted after 24h
-        </p>
+        {uploading ? (
+          <>
+            <Loader2 className="h-8 w-8 mx-auto text-primary animate-spin" />
+            <p className="mt-2 text-sm text-muted-foreground">Uploading…</p>
+          </>
+        ) : (
+          <>
+            <Upload className={`h-8 w-8 mx-auto transition-colors ${dragging ? 'text-primary' : 'text-muted-foreground'}`} />
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              {dragging ? 'Drop your PDF here' : 'Drop a PDF or click to browse'}
+            </p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Up to 5 documents · Auto-deleted after 24 h
+            </p>
+          </>
+        )}
       </div>
 
+      {/* Error message */}
       {error && (
         <div className="flex items-center gap-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -102,15 +117,29 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
         </div>
       )}
 
+      {/* Document list — new items animate in via CSS transition on opacity/transform */}
       {documents.length > 0 && (
         <ul className="space-y-1.5">
           {documents.map(doc => (
-            <li key={doc.id} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-muted/40">
+            <li
+              key={doc.id}
+              className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-muted/40
+                         transition-all duration-300 ease-out"
+              style={{ animation: 'doc-slide-in 0.25s ease-out' }}
+            >
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="flex-1 truncate text-xs">{doc.filename}</span>
-              {doc.status === 'processing' && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-              {doc.status === 'ready' && <CheckCircle className="h-3.5 w-3.5 text-green-500" />}
-              {doc.status === 'error' && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
+
+              {/* Chunk count badge — shown once the document is ready */}
+              {doc.status === 'ready' && doc.chunk_count > 0 && (
+                <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {doc.chunk_count} chunk{doc.chunk_count !== 1 ? 's' : ''}
+                </span>
+              )}
+
+              {doc.status === 'processing' && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />}
+              {doc.status === 'ready' && <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-500" />}
+              {doc.status === 'error' && <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" />}
             </li>
           ))}
         </ul>

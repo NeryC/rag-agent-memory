@@ -17,6 +17,13 @@ interface ChatInterfaceProps {
   onConversationIdChange?: (id: string) => void
 }
 
+// Suggested starter questions shown in the empty state
+const EXAMPLE_SUGGESTIONS = [
+  'Summarize the main points of the uploaded documents',
+  'What are the key findings?',
+  'Explain the methodology used',
+]
+
 export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -29,9 +36,9 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  async function sendMessage() {
-    if (!input.trim() || streaming) return
-    const userText = input.trim()
+  async function sendMessage(text?: string) {
+    const userText = (text ?? input).trim()
+    if (!userText || streaming) return
     setInput('')
     setStreaming(true)
     setActiveTool(null)
@@ -102,7 +109,7 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
           } catch { /* ignore parse errors */ }
         }
       }
-    } catch (e) {
+    } catch {
       setMessages(prev => {
         const copy = [...prev]
         if (copy[assistantIdx]) copy[assistantIdx] = { ...copy[assistantIdx], content: 'Error: please try again.' }
@@ -143,15 +150,44 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto p-4 space-y-4 min-h-0">
+      {/* Messages area — aria-live so screen readers announce new messages */}
+      <div
+        className="flex-1 overflow-auto p-4 space-y-4 min-h-0"
+        aria-live="polite"
+        aria-label="Conversation messages"
+      >
         {messages.length === 0 && (
+          /* Empty state: centered card with suggested questions */
           <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground text-sm text-center px-8">
-              Upload a PDF and ask questions about it.<br/>
-              The agent remembers what you tell it across sessions.
-            </p>
+            <div className="max-w-sm w-full rounded-2xl border bg-muted/20 p-6 space-y-4">
+              <div className="text-center">
+                <p className="font-semibold text-foreground text-base">
+                  Ask questions about your documents
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upload a PDF, then try one of these to get started:
+                </p>
+              </div>
+              <ul className="space-y-2">
+                {EXAMPLE_SUGGESTIONS.map(suggestion => (
+                  <li key={suggestion}>
+                    <button
+                      onClick={() => sendMessage(suggestion)}
+                      disabled={streaming}
+                      className="w-full text-left text-sm text-muted-foreground hover:text-foreground
+                                 border border-muted-foreground/20 hover:border-primary/50
+                                 bg-muted/30 hover:bg-muted/50
+                                 rounded-lg px-3 py-2 transition-colors disabled:opacity-50"
+                    >
+                      {suggestion}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
+
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
@@ -166,10 +202,33 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
             </div>
           </div>
         ))}
-        {streaming && <ToolCallIndicator activeTool={activeTool} />}
+
+        {/* Tool call indicator or typing indicator */}
+        {streaming && activeTool && <ToolCallIndicator activeTool={activeTool} />}
+        {streaming && !activeTool && (
+          /* Typing indicator: 3 animated dots when the model is generating text */
+          <div className="flex justify-start" aria-label="Assistant is typing">
+            <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce"
+                style={{ animationDelay: '0ms', animationDuration: '900ms' }}
+              />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce"
+                style={{ animationDelay: '200ms', animationDuration: '900ms' }}
+              />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce"
+                style={{ animationDelay: '400ms', animationDuration: '900ms' }}
+              />
+            </div>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
+      {/* Input area */}
       <div className="border-t p-3 shrink-0">
         <div className="flex gap-2">
           <input
@@ -181,8 +240,9 @@ export function ChatInterface({ onCitationClick, onConversationIdChange }: ChatI
             className="flex-1 rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           />
           <button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={streaming || !input.trim()}
+            aria-label="Send message"
             className="rounded-lg bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
           >
             <Send className="h-4 w-4" />

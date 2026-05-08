@@ -16,12 +16,17 @@ export function MemoryViewer({ memories }: MemoryViewerProps) {
   if (memories.length === 0) return null
 
   return (
-    <div className="border rounded-lg bg-muted/30 text-sm mb-2">
+    <div
+      className="rounded-lg bg-muted/30 text-sm mb-2 overflow-hidden"
+      // Blue-to-purple gradient left border accent
+      style={{ borderLeft: '2px solid', borderImage: 'linear-gradient(to bottom, #3b82f6, #a855f7) 1' }}
+    >
       <button
         onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
         className="flex items-center gap-2 w-full px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
       >
-        <Brain className="h-4 w-4" />
+        <Brain className="h-4 w-4 shrink-0" />
         <span>{memories.length} memor{memories.length !== 1 ? 'ies' : 'y'} recalled</span>
         {open ? <ChevronUp className="h-4 w-4 ml-auto" /> : <ChevronDown className="h-4 w-4 ml-auto" />}
       </button>
