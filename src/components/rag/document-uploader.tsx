@@ -29,8 +29,8 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
       onUpload({
         id: data.document_id,
         filename: file.name,
-        status: 'processing',
-        chunk_count: 0,
+        status: data.status ?? 'processing',
+        chunk_count: data.chunk_count ?? 0,
         uploaded_at: new Date().toISOString(),
         blob_url: '',
         session_id: '',
