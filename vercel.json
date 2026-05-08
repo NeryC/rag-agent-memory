@@ -1,7 +1,6 @@
 {
   "functions": {
     "api/ingest.py": {
-      "runtime": "vercel-python@3.13.x",
       "maxDuration": 120
     }
   },
