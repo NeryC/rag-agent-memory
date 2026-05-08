@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.75",
+    "@ai-sdk/gateway": "^3.0.110",
     "@base-ui/react": "^1.4.1",
     "@supabase/supabase-js": "^2.105.3",
     "@vercel/blob": "^2.3.3",

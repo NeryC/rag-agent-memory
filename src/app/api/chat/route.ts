@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { createAnthropic } from '@ai-sdk/anthropic'
+import { createGateway } from '@ai-sdk/gateway'
 import { tool, generateText, stepCountIs } from 'ai'
 import { z } from 'zod'
 import { createServerClient } from '@/lib/supabase'
@@ -12,7 +12,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 120
 
 function createAnthropicClient() {
-  return createAnthropic({
+  return createGateway({
     apiKey: process.env.AI_GATEWAY_API_KEY!,
   })
 }
@@ -43,7 +43,7 @@ async function extractMemories(
     const anthropic = createAnthropicClient()
 
     const { object } = await generateObject({
-      model: anthropic('claude-haiku-4-5-20251001'),
+      model: anthropic('anthropic/claude-haiku-4.5'),
       schema: z.object({
         facts: z.array(z.object({
           content: z.string(),
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
         let fullText = ''
 
         const result = await generateText({
-          model: anthropic('claude-sonnet-4-6'),
+          model: anthropic('anthropic/claude-sonnet-4.6'),
           system: buildSystemPrompt(chunks, memories),
           messages,
           tools,
