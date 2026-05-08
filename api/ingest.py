@@ -88,13 +88,22 @@ def process_document(blob_url: str, filename: str, document_id: str, session_id:
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        body: dict = {}
         try:
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length))
             process_document(body["blob_url"], body["filename"], body["document_id"], body["session_id"])
             self._send(200, {"status": "ok"})
         except Exception as e:
-            self._send(500, {"error": str(e)})
+            error_msg = str(e)
+            # Mark document as errored so callers don't wait forever
+            if body.get("document_id"):
+                try:
+                    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+                    supabase.table("documents").update({"status": "error"}).eq("id", body["document_id"]).execute()
+                except Exception:
+                    pass
+            self._send(500, {"error": error_msg})
 
     def _send(self, code: int, data: dict) -> None:
         self.send_response(code)
