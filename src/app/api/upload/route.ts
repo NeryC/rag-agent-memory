@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { after } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
+
+export const maxDuration = 60 // allow after() background ingest to complete
 import { put } from '@vercel/blob'
 import { createServerClient } from '@/lib/supabase'
 import { getOrCreateSessionId, sessionCookieOptions } from '@/lib/session'
