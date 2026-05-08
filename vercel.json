@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/ingest.py": {
-      "maxDuration": 120
-    }
-  },
   "crons": [
     {
       "path": "/api/cleanup",
