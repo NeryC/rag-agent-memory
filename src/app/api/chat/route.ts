@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createGateway } from '@ai-sdk/gateway'
-import { tool, generateText, stepCountIs } from 'ai'
+import { tool, streamText, generateObject, stepCountIs } from 'ai'
 import { z } from 'zod'
 import { createServerClient } from '@/lib/supabase'
 import { embed } from '@/lib/embeddings'
@@ -39,7 +39,6 @@ async function extractMemories(
   assistantResponse: string,
 ) {
   try {
-    const { generateObject } = await import('ai')
     const anthropic = createAnthropicClient()
 
     const { object } = await generateObject({
@@ -186,9 +185,8 @@ export async function POST(req: NextRequest) {
           send({ type: 'memories_used', memories: memories.map(m => ({ content: m.content, confidence: m.confidence })) })
         }
 
-        let fullText = ''
-
-        const result = await generateText({
+        // Real token-level streaming — server sends each chunk as it arrives
+        const result = streamText({
           model: anthropic('anthropic/claude-sonnet-4.6'),
           system: buildSystemPrompt(chunks, memories),
           messages,
@@ -202,11 +200,11 @@ export async function POST(req: NextRequest) {
           },
         })
 
-        fullText = result.text
-        // Send text in chunks to simulate streaming
-        const words = fullText.split(' ')
-        for (let i = 0; i < words.length; i += 5) {
-          send({ type: 'text', content: words.slice(i, i + 5).join(' ') + (i + 5 < words.length ? ' ' : '') })
+        // Stream tokens to the client as they arrive; accumulate for post-processing
+        let fullText = ''
+        for await (const chunk of result.textStream) {
+          fullText += chunk
+          send({ type: 'text', content: chunk })
         }
 
         if (citationsMap.size > 0) {

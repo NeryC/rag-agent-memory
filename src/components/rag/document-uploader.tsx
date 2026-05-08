@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { Upload, FileText, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import type { Document } from '@/lib/types'
 
@@ -12,6 +12,7 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -51,18 +52,26 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
   }, [handleFile])
 
   const handleClick = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.pdf'
-    input.onchange = e => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (file) handleFile(file)
-    }
-    input.click()
+    fileInputRef.current?.click()
   }
 
   return (
     <div className="space-y-3">
+      {/* Hidden file input — triggered programmatically via ref */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        className="hidden"
+        onChange={e => {
+          const file = e.target.files?.[0]
+          if (file) {
+            handleFile(file)
+            // Reset value so the same file can be re-selected
+            e.target.value = ''
+          }
+        }}
+      />
       <div
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}

@@ -3,7 +3,6 @@ import { put } from '@vercel/blob'
 import { createServerClient } from '@/lib/supabase'
 import { getOrCreateSessionId, sessionCookieOptions } from '@/lib/session'
 import { processDocument } from '@/lib/ingest'
-import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -49,7 +48,6 @@ export async function POST(req: NextRequest) {
     // Runs before response so Hobby plan 10s window covers everything for small PDFs
     await processDocument(blob.url, file.name, doc.id, sessionId)
 
-    await cookies()
     const response = NextResponse.json({ document_id: doc.id, status: 'ready' })
     const opts = sessionCookieOptions()
     response.cookies.set(opts.name, sessionId, opts)
