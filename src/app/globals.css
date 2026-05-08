@@ -1,30 +1,59 @@
 @import "tailwindcss";
 
+/* Unified design system — matches research-agent and code-reviewer */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(0.09 0.006 265);
+  --foreground: oklch(0.96 0.004 265);
+  --card: oklch(0.12 0.008 265);
+  --card-foreground: oklch(0.96 0.004 265);
+  --border: oklch(1 0 0 / 8%);
+  --muted: oklch(0.16 0.012 265);
+  --muted-foreground: oklch(0.55 0.02 265);
+  --primary: oklch(0.65 0.22 265);
+  --primary-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.65 0.22 22);
+  --ring: oklch(0.65 0.22 265);
+  --input: oklch(1 0 0 / 10%);
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: oklch(0.09 0.006 265);
+  --foreground: oklch(0.96 0.004 265);
+  --card: oklch(0.12 0.008 265);
+  --card-foreground: oklch(0.96 0.004 265);
+  --border: oklch(1 0 0 / 8%);
+  --muted: oklch(0.16 0.012 265);
+  --muted-foreground: oklch(0.55 0.02 265);
+  --primary: oklch(0.65 0.22 265);
+  --primary-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.65 0.22 22);
+  --ring: oklch(0.65 0.22 265);
+  --input: oklch(1 0 0 / 10%);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-geist-sans, system-ui, -apple-system, sans-serif);
 }
 
 /* Slide-in animation for newly added document list items */

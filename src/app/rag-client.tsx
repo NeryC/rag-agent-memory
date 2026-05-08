@@ -42,7 +42,7 @@ export function RagClient() {
         `}
       >
         <div className="p-4 border-b shrink-0">
-          <h1 className="font-semibold tracking-tight">RAG Memory Agent</h1>
+          <h1 className="font-semibold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-violet-400 bg-clip-text text-transparent">RAG Memory Agent</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Ask questions about your PDFs · Remembers across sessions
           </p>
