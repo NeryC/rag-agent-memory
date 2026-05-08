@@ -1,8 +1,8 @@
 # RAG Agent with Memory
 
-Sube PDFs y chatea con ellos. El agente cita páginas específicas, busca en la web cuando los documentos no cubren el tema, y recuerda hechos sobre ti entre sesiones.
+Upload PDFs and chat with them. The agent cites specific pages, searches the web when documents don't cover the topic, and remembers facts about you between sessions.
 
-> **Demo en vivo:** [rag-agent-memory.vercel.app](https://rag-agent-memory.vercel.app)  
+> **Live demo:** [rag-agent-memory.vercel.app](https://rag-agent-memory.vercel.app)  
 > **GitHub:** [github.com/NeryC/rag-agent-memory](https://github.com/NeryC/rag-agent-memory)
 
 <!--
@@ -12,146 +12,146 @@ Sube PDFs y chatea con ellos. El agente cita páginas específicas, busca en la 
 
 ---
 
-## ¿Qué hace este proyecto?
+## What does this project do?
 
-Este proyecto implementa un sistema RAG completo (Retrieval-Augmented Generation) con memoria persistente entre sesiones. En términos simples:
+This project implements a complete RAG system (Retrieval-Augmented Generation) with persistent memory across sessions. In plain terms:
 
-- **RAG** significa que el agente responde preguntas basándose en documentos reales que tú subiste, no en su conocimiento de entrenamiento
-- **Memoria** significa que el agente aprende hechos sobre ti durante las conversaciones y los recuerda en sesiones futuras
+- **RAG** means the agent answers questions based on real documents you uploaded, not on its training knowledge
+- **Memory** means the agent learns facts about you during conversations and recalls them in future sessions
 
-Hay cuatro capacidades principales:
+There are four main capabilities:
 
-1. **Subir PDFs** — El sistema extrae el texto del PDF, lo divide en fragmentos de ~500 tokens, y los convierte en vectores numéricos (embeddings) almacenados en Supabase
-2. **Preguntas con citas** — Al hacer una pregunta, el sistema encuentra los fragmentos más similares semánticamente y el agente responde citando el documento y página de origen como `[archivo.pdf p.3]`
-3. **Fallback a la web** — Si los documentos no cubren el tema, el agente usa Exa para buscar en internet automáticamente
-4. **Memoria entre sesiones** — Al terminar cada conversación, un segundo modelo (claude-haiku-4.5) extrae hechos duraderos sobre el usuario. En la próxima sesión, el agente los recupera y los usa sin que tengas que repetirlos
-
----
-
-## Tutorial paso a paso
-
-### Paso 1: Sube un PDF
-
-1. Abre [rag-agent-memory.vercel.app](https://rag-agent-memory.vercel.app)
-2. En el panel izquierdo, haz clic en el área de upload o arrastra un PDF
-3. Espera ~2-5 segundos (el tiempo que tarda la extracción, embedding y almacenamiento)
-4. Verás el documento con un ✅ verde cuando esté listo
-
-> **Ejemplo:** Sube un paper de investigación, un manual técnico, o cualquier documentación en PDF.
-
-### Paso 2: Haz preguntas sobre el contenido
-
-Una vez procesado el documento, escribe preguntas en el chat:
-
-```
-¿Cuál es la conclusión principal del paper?
-```
-
-```
-¿Qué algoritmo usa el capítulo 3?
-```
-
-```
-Resume los puntos clave de la sección de metodología
-```
-
-La respuesta aparecerá con citas como:
-```
-El paper concluye que los modelos de atención con mecanismos de memoria episódica
-superan a los transformers estándar en tareas de razonamiento a largo plazo
-[research-paper.pdf p.8]. Los autores proponen un mecanismo de compresión adaptativa
-que reduce el uso de memoria en un 40% [research-paper.pdf p.12].
-```
-
-### Paso 3: Observa la memoria en acción
-
-Cuéntale algo al agente:
-```
-Soy desarrollador de Python y estoy aprendiendo sobre embeddings para un proyecto de búsqueda semántica.
-```
-
-En conversaciones futuras (incluso después de recargar la página), el agente recordará:
-- Que eres desarrollador de Python
-- Que tu proyecto involucra embeddings
-- Que te interesa la búsqueda semántica
-
-Esto se muestra en la UI con un panel de "Memorias usadas" al inicio de la respuesta.
-
-### Paso 4: Prueba el fallback a la web
-
-Pregunta algo que no está en tus documentos:
-```
-¿Cuáles son las últimas novedades de Claude en 2025?
-```
-
-El agente detectará que los documentos no cubren el tema y usará automáticamente Exa para buscar en internet, indicándolo en la respuesta.
-
-### Paso 5: Sube hasta 5 documentos
-
-Puedes subir hasta 5 PDFs por sesión. El agente busca en todos simultáneamente y puede citar múltiples documentos en una sola respuesta:
-
-```
-¿En qué coinciden y difieren los dos papers sobre transformers que subí?
-```
-
-### Gestión de sesión
-
-- **La sesión dura 24 horas** — los documentos y memorias se eliminan automáticamente
-- **No hay login** — la sesión se gestiona con una cookie HttpOnly anónima
-- Para **resetear la sesión** (limpiar todos los documentos y empezar de cero), ve a `/api/clear-session` en el navegador
+1. **Upload PDFs** — The system extracts text from the PDF, splits it into ~500-token chunks, and converts them into numeric vectors (embeddings) stored in Supabase
+2. **Questions with citations** — When you ask a question, the system finds the most semantically similar chunks and the agent responds citing the source document and page as `[file.pdf p.3]`
+3. **Web fallback** — If the documents don't cover the topic, the agent uses Exa to search the internet automatically
+4. **Memory across sessions** — After each conversation, a second model (claude-haiku-4.5) extracts durable facts about the user. In the next session, the agent retrieves and uses them without you having to repeat yourself
 
 ---
 
-## Demostración: flujo interno completo
+## Step-by-step tutorial
 
-### Flujo de Upload
+### Step 1: Upload a PDF
+
+1. Open [rag-agent-memory.vercel.app](https://rag-agent-memory.vercel.app)
+2. In the left panel, click the upload area or drag a PDF onto it
+3. Wait ~2-5 seconds (the time needed for extraction, embedding, and storage)
+4. You will see the document with a green ✅ when it is ready
+
+> **Example:** Upload a research paper, a technical manual, or any PDF documentation.
+
+### Step 2: Ask questions about the content
+
+Once the document is processed, type questions in the chat:
 
 ```
-Usuario arrastra "research.pdf"
+What is the main conclusion of the paper?
+```
+
+```
+What algorithm does chapter 3 use?
+```
+
+```
+Summarize the key points of the methodology section
+```
+
+The response will appear with citations like:
+```
+The paper concludes that attention models with episodic memory mechanisms
+outperform standard transformers on long-range reasoning tasks
+[research-paper.pdf p.8]. The authors propose an adaptive compression
+mechanism that reduces memory usage by 40% [research-paper.pdf p.12].
+```
+
+### Step 3: See memory in action
+
+Tell the agent something about yourself:
+```
+I am a Python developer learning about embeddings for a semantic search project.
+```
+
+In future conversations (even after reloading the page), the agent will remember:
+- That you are a Python developer
+- That your project involves embeddings
+- That you are interested in semantic search
+
+This is shown in the UI with a "Memories recalled" panel at the start of the response.
+
+### Step 4: Test the web fallback
+
+Ask something that is not in your documents:
+```
+What are the latest Claude updates in 2025?
+```
+
+The agent will detect that the documents don't cover the topic and will automatically use Exa to search the internet, indicating this in the response.
+
+### Step 5: Upload up to 5 documents
+
+You can upload up to 5 PDFs per session. The agent searches all of them simultaneously and can cite multiple documents in a single response:
+
+```
+Where do the two papers on transformers I uploaded agree and differ?
+```
+
+### Session management
+
+- **The session lasts 24 hours** — documents and memories are deleted automatically
+- **No login required** — the session is managed with an anonymous HttpOnly cookie
+- To **reset the session** (clear all documents and start fresh), navigate to `/api/clear-session` in the browser
+
+---
+
+## Demo: full internal walkthrough
+
+### Upload Flow
+
+```
+User drags "research.pdf"
          │
          ▼
 ┌──────────────────────────────────────────────────────────┐
 │  document-uploader.tsx                                   │
-│  POST /api/upload (FormData con el PDF)                  │
+│  POST /api/upload (FormData with the PDF)                │
 └─────────────────────┬────────────────────────────────────┘
                       │
                       ▼
 ┌──────────────────────────────────────────────────────────┐
 │  /api/upload/route.ts                                    │
 │                                                          │
-│  1. Obtener/crear sessionId desde cookie HttpOnly        │
-│  2. Verificar límite: ¿session tiene < 5 documentos?     │
-│  3. Subir PDF a Vercel Blob (almacenamiento privado)     │
-│  4. Crear registro en tabla 'documents' (status: proc.)  │
+│  1. Get/create sessionId from HttpOnly cookie            │
+│  2. Check limit: does session have < 5 documents?        │
+│  3. Upload PDF to Vercel Blob (private storage)          │
+│  4. Create record in 'documents' table (status: proc.)   │
 │  5. await processDocument(blob.url, ...)                 │
-│     ← SINCRÓNICO: espera que termine antes de responder  │
-│  6. Responder { document_id, status: 'ready' }           │
+│     ← SYNCHRONOUS: waits until complete before responding│
+│  6. Respond { document_id, status: 'ready' }             │
 └─────────────────────┬────────────────────────────────────┘
-                      │ (dentro de processDocument)
+                      │ (inside processDocument)
                       ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  lib/ingest.ts — processDocument()                                       │
 │                                                                          │
-│  1. Descargar PDF desde Vercel Blob                                      │
+│  1. Download PDF from Vercel Blob                                        │
 │  2. extractPdfText(buffer)                                               │
-│     a. Leer bytes en latin1                                              │
-│     b. Buscar streams con regex: /stream\r?\n([\s\S]*?)\r?\nendstream/g  │
-│     c. Para cada stream, verificar si el dict anterior dice "FlateDecode" │
-│     d. Si sí → inflateSync() para descomprimir (zlib built-in de Node)  │
-│     e. Extraer texto de operadores Tj y TJ con regex                     │
-│     f. Unir todo el texto extraído                                       │
+│     a. Read bytes in latin1                                              │
+│     b. Find streams with regex: /stream\r?\n([\s\S]*?)\r?\nendstream/g  │
+│     c. For each stream, check if the preceding dict says "FlateDecode"  │
+│     d. If yes → inflateSync() to decompress (Node built-in zlib)        │
+│     e. Extract text from Tj and TJ operators with regex                 │
+│     f. Join all extracted text                                           │
 │                                                                          │
 │  3. chunkText(pages)                                                     │
-│     - Dividir en párrafos (split en \n\n)                                │
-│     - Acumular hasta ~500 tokens (≈2000 chars) por chunk                 │
-│     - Añadir 50 tokens de overlap entre chunks consecutivos              │
-│     → Resultado: [{ content: "...", pageNumber: 1 }, ...]                │
+│     - Split into paragraphs (split on \n\n)                             │
+│     - Accumulate up to ~500 tokens (≈2000 chars) per chunk              │
+│     - Add 50-token overlap between consecutive chunks                   │
+│     → Output: [{ content: "...", pageNumber: 1 }, ...]                  │
 │                                                                          │
 │  4. embedBatch(texts)                                                    │
-│     POST https://api.voyageai.com/v1/embeddings                          │
-│     { input: [chunk1, chunk2, ...], model: "voyage-3",                   │
-│       input_type: "document" }                                           │
-│     → Cada chunk → vector de 1024 dimensiones                            │
+│     POST https://api.voyageai.com/v1/embeddings                         │
+│     { input: [chunk1, chunk2, ...], model: "voyage-3",                  │
+│       input_type: "document" }                                          │
+│     → Each chunk → 1024-dimensional vector                              │
 │                                                                          │
 │  5. INSERT INTO chunks (document_id, session_id, content,               │
 │                          embedding, chunk_index, page_number)            │
@@ -159,27 +159,27 @@ Usuario arrastra "research.pdf"
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Flujo de Chat
+### Chat Flow
 
 ```
-Usuario escribe: "¿Cuál es el algoritmo principal del paper?"
+User types: "What is the main algorithm in the paper?"
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  chat-interface.tsx                                                      │
 │  POST /api/chat { message, conversation_id }                             │
-│  Abre EventSource → escucha eventos SSE                                  │
+│  Opens EventSource → listens to SSE events                              │
 └─────────────────────┬────────────────────────────────────────────────────┘
                       │
                       ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  /api/chat/route.ts                                                      │
 │                                                                          │
-│  1. getOrCreateSessionId() desde cookie                                  │
-│  2. Si hay conversation_id, cargar historial desde 'conversations'       │
+│  1. getOrCreateSessionId() from cookie                                   │
+│  2. If conversation_id exists, load history from 'conversations'        │
 │                                                                          │
-│  3. embed(message) — Voyage AI con input_type: "query"                   │
-│     → queryEmbedding: número[] de 1024 dims                             │
+│  3. embed(message) — Voyage AI with input_type: "query"                 │
+│     → queryEmbedding: number[] of 1024 dims                             │
 │                                                                          │
 │  4. Promise.all([                                                        │
 │       supabase.rpc('match_chunks', {                                     │
@@ -189,43 +189,43 @@ Usuario escribe: "¿Cuál es el algoritmo principal del paper?"
 │         query_embedding, match_threshold: 0.3, match_count: 3           │
 │       }),                                                                │
 │     ])                                                                   │
-│     → chunks: top-5 fragmentos más similares semánticamente              │
-│     → memories: top-3 recuerdos más relevantes del usuario              │
+│     → chunks: top-5 most semantically similar fragments                 │
+│     → memories: top-3 most relevant user memories                      │
 │                                                                          │
 │  5. buildSystemPrompt(chunks, memories)                                  │
-│     "Eres un asistente personal. Cita documentos como [file p.N]."      │
-│     + "## Lo que recuerdas del usuario:\n- Es dev de Python\n- ..."     │
-│     + "## Contexto relevante:\n[paper.pdf p.3] El algoritmo Adagrad..." │
+│     "You are a personal assistant. Cite documents as [file p.N]."       │
+│     + "## What you remember about the user:\n- Is a Python dev\n- ..."  │
+│     + "## Relevant context:\n[paper.pdf p.3] The Adagrad algorithm..."  │
 │                                                                          │
 │  6. generateText({                                                       │
 │       model: claude-sonnet-4.6,                                          │
 │       system: buildSystemPrompt,                                         │
-│       messages: historial + { role: 'user', content: message },         │
+│       messages: history + { role: 'user', content: message },           │
 │       tools: { search_documents, search_web, save_memory },             │
 │       stopWhen: stepCountIs(6),                                          │
 │     })                                                                   │
 │                                                                          │
-│  7. Enviar texto en fragmentos vía SSE (streaming simulado)              │
-│  8. Enviar { type: 'citations', citations } si encontró citas            │
-│  9. Guardar conversación actualizada en 'conversations'                  │
-│  10. extractMemories() en background (sin bloquear la respuesta)         │
+│  7. Send text in chunks via SSE (simulated streaming)                   │
+│  8. Send { type: 'citations', citations } if citations were found       │
+│  9. Save updated conversation to 'conversations'                         │
+│  10. extractMemories() in background (does not block the response)      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Flujo de Extracción de Memoria
+### Memory Extraction Flow
 
 ```
-Después de cada respuesta del asistente (async, no bloquea al usuario):
+After each assistant response (async, does not block the user):
          │
          ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  extractMemories(supabase, sessionId, conversationId, userMsg, aiResp)   │
 │                                                                          │
 │  generateObject({                                                        │
-│    model: claude-haiku-4.5,    ← más barato, suficiente para esto       │
+│    model: claude-haiku-4.5,    ← cheaper, sufficient for this task      │
 │    schema: z.object({                                                    │
 │      facts: z.array(z.object({                                          │
-│        content: z.string(),    ← "El usuario es desarrollador de Python"│
+│        content: z.string(),    ← "The user is a Python developer"       │
 │        confidence: z.number(), ← 0.0–1.0                               │
 │      }))                                                                 │
 │    }),                                                                   │
@@ -233,89 +233,89 @@ Después de cada respuesta del asistente (async, no bloquea al usuario):
 │             Extract durable facts...`                                    │
 │  })                                                                      │
 │                                                                          │
-│  Filtrar: solo facts con confidence > 0.7                               │
+│  Filter: only facts with confidence > 0.7                               │
 │                                                                          │
-│  Para cada hecho:                                                        │
-│    embed(fact.content)  ← vectorizar para búsqueda semántica futura     │
+│  For each fact:                                                          │
+│    embed(fact.content)  ← vectorize for future semantic search          │
 │    INSERT INTO memories (session_id, content, embedding, confidence)    │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Arquitectura del código
+## Code architecture
 
-### Estructura de carpetas
+### Folder structure
 
 ```
 rag-agent-memory/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx                    # Shell del servidor (importa client components)
+│   │   ├── page.tsx                    # Server shell (imports client components)
 │   │   └── api/
-│   │       ├── upload/route.ts         # POST — ingestión de PDF (extract + embed + store)
-│   │       ├── chat/route.ts           # POST — SSE stream con RAG + memory tools
-│   │       └── clear-session/route.ts  # GET — expira la cookie de sesión
+│   │       ├── upload/route.ts         # POST — PDF ingestion (extract + embed + store)
+│   │       ├── chat/route.ts           # POST — SSE stream with RAG + memory tools
+│   │       └── clear-session/route.ts  # GET — expires the session cookie
 │   ├── lib/
-│   │   ├── ingest.ts                   # Extractor PDF + chunker + embedder (sin deps externos)
-│   │   ├── embeddings.ts               # embed() para queries (Voyage AI, input_type:"query")
-│   │   ├── supabase.ts                 # createServerClient() — cliente de Supabase
-│   │   ├── session.ts                  # getOrCreateSessionId() — cookie HttpOnly
-│   │   ├── exa.ts                      # searchWeb() — fallback a internet vía Exa
-│   │   └── types.ts                    # Tipos TypeScript compartidos
+│   │   ├── ingest.ts                   # PDF extractor + chunker + embedder (no external deps)
+│   │   ├── embeddings.ts               # embed() for queries (Voyage AI, input_type:"query")
+│   │   ├── supabase.ts                 # createServerClient() — Supabase client
+│   │   ├── session.ts                  # getOrCreateSessionId() — HttpOnly cookie
+│   │   ├── exa.ts                      # searchWeb() — internet fallback via Exa
+│   │   └── types.ts                    # Shared TypeScript types
 │   └── components/rag/
-│       ├── document-uploader.tsx       # Drag-and-drop de PDFs
-│       └── chat-interface.tsx          # Consumidor SSE + mensajes + citas
+│       ├── document-uploader.tsx       # Drag-and-drop PDF uploader
+│       └── chat-interface.tsx          # SSE consumer + messages + citations
 ├── supabase/
-│   └── schema.sql                      # Tablas, índices pgvector, funciones RPC
+│   └── schema.sql                      # Tables, pgvector indexes, RPC functions
 └── api/
-    └── ingest.py                       # Versión Python legacy (sustituida por ingest.ts)
+    └── ingest.py                       # Legacy Python version (replaced by ingest.ts)
 ```
 
-### Archivo por archivo: qué hace cada uno
+### File-by-file: what each one does
 
-#### `src/lib/ingest.ts` — El parser PDF sin dependencias externas
+#### `src/lib/ingest.ts` — The zero-dependency PDF parser
 
-Este es el archivo más técnico del proyecto. Los PDFs modernos comprimen su contenido con zlib (algoritmo FlateDecode). Las librerías populares como `pdf-parse` o `pdfjs-dist` requieren APIs del browser (`DOMMatrix`, `canvas`) que no existen en Node.js serverless. La solución: parsear el PDF directamente con herramientas built-in de Node.
+This is the most technical file in the project. Modern PDFs compress their content with zlib (the FlateDecode algorithm). Popular libraries like `pdf-parse` or `pdfjs-dist` require browser APIs (`DOMMatrix`, `canvas`) that do not exist in serverless Node.js. The solution: parse the PDF directly with Node built-ins.
 
 ```typescript
-import { inflateSync } from 'zlib' // ← built-in de Node.js, sin npm install
+import { inflateSync } from 'zlib' // built-in Node.js module — no npm install needed
 
 function extractPdfText(buffer: Buffer): string {
-  // Leer el PDF como texto latin1 (byte-a-byte, sin perder datos)
+  // Read the PDF as latin1 text (byte-for-byte, no data loss)
   const raw = buffer.toString('latin1')
   const texts: string[] = []
 
-  // Un PDF está compuesto de "streams" — bloques de datos
-  // Esta regex encuentra todos los streams del documento
+  // A PDF is composed of "streams" — blocks of binary or text data
+  // This regex finds every stream in the document
   const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g
   let m: RegExpExecArray | null
 
   while ((m = streamRegex.exec(raw)) !== null) {
     const streamStart = m.index
-    const streamData = m[1]  // El contenido crudo del stream
+    const streamData = m[1]  // The raw stream content
 
-    // El diccionario antes del stream dice si está comprimido
+    // The dictionary before the stream declares whether it is compressed
     const preceding = raw.slice(Math.max(0, streamStart - 500), streamStart)
-    const isFlate = preceding.includes('FlateDecode')  // ← ¿está comprimido con zlib?
+    const isFlate = preceding.includes('FlateDecode')  // is it zlib-compressed?
 
     let content: string
     if (isFlate) {
       try {
-        // Descomprimir con el módulo zlib built-in de Node
+        // Decompress using Node's built-in zlib module
         const compressed = Buffer.from(streamData, 'latin1')
         const decompressed = inflateSync(compressed)
         content = decompressed.toString('utf8')
-      } catch { continue } // stream corrupto → saltar
+      } catch { continue } // corrupted stream — skip
     } else {
-      content = streamData // texto plano → usar directamente
+      content = streamData // plain text — use directly
     }
 
-    // Solo procesar streams que contengan operadores de texto PDF
+    // Only process streams that contain PDF text operators
     if (!content.includes('Tj') && !content.includes('TJ')) continue
 
-    // Extraer texto del operador Tj: (texto) Tj
-    // El PDF usa notación PostScript: el texto está entre paréntesis
+    // Extract text from the Tj operator: (text) Tj
+    // PDF uses PostScript notation: text is enclosed in parentheses
     for (const t of content.matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g)) {
       const s = t[1]
         .replace(/\\n/g, '\n')
@@ -323,8 +323,8 @@ function extractPdfText(buffer: Buffer): string {
       if (s.trim()) texts.push(s)
     }
 
-    // Extraer texto del operador TJ: [(texto) offset ...] TJ
-    // TJ permite ajustes de kerning entre fragmentos
+    // Extract text from the TJ operator: [(text) offset ...] TJ
+    // TJ allows kerning adjustments between text fragments
     for (const t of content.matchAll(/\[([^\]]+)\]\s*TJ/g)) {
       for (const p of t[1].matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)/g)) {
         if (p[1].trim()) texts.push(p[1])
@@ -336,11 +336,11 @@ function extractPdfText(buffer: Buffer): string {
 }
 ```
 
-**¿Qué son Tj y TJ?** Son operadores del lenguaje PostScript embebido en los PDFs. `Tj` muestra una cadena de texto: `(Hola mundo) Tj`. `TJ` muestra un array de cadenas con ajustes de espaciado: `[(Hola) 10 (mundo)] TJ`.
+**What are Tj and TJ?** They are operators from the PostScript language embedded inside PDFs. `Tj` renders a single string: `(Hello world) Tj`. `TJ` renders an array of strings with spacing adjustments: `[(Hello) 10 (world)] TJ`.
 
 ---
 
-#### `src/lib/ingest.ts` — Chunking y embedding
+#### `src/lib/ingest.ts` — Chunking and embedding
 
 ```typescript
 function chunkText(pages: { pageNum: number; text: string }[]): { content: string; pageNumber: number }[] {
@@ -349,18 +349,18 @@ function chunkText(pages: { pageNum: number; text: string }[]): { content: strin
   let bufferPage = 1
 
   for (const { pageNum, text } of pages) {
-    // Dividir por párrafos (\n\n)
+    // Split by paragraphs (\n\n)
     const paragraphs = text.split(/\n\n+/).map(p => p.trim()).filter(Boolean)
 
     for (const para of paragraphs) {
-      // Si añadir este párrafo supera los ~500 tokens, guarda el chunk actual
+      // If adding this paragraph would exceed ~500 tokens, flush the current chunk
       if (roughTokenCount(buffer) + roughTokenCount(para) > 500 && buffer) {
         chunks.push({ content: buffer.trim(), pageNumber: bufferPage })
 
-        // OVERLAP: conserva las últimas ~50 tokens del chunk anterior
-        // Esto garantiza que el contexto al inicio de cada chunk no esté cortado abruptamente
+        // OVERLAP: keep the last ~50 tokens of the previous chunk
+        // This ensures context at the start of each chunk is not abruptly cut off
         const words = buffer.split(/\s+/)
-        const overlapWords = Math.floor((50 * 4) / 5) // ≈40 palabras de overlap
+        const overlapWords = Math.floor((50 * 4) / 5) // ~40 overlap words
         buffer = words.slice(-overlapWords).join(' ') + ' '
         bufferPage = pageNum
       }
@@ -373,7 +373,7 @@ function chunkText(pages: { pageNum: number; text: string }[]): { content: strin
 }
 
 async function embedBatch(texts: string[]): Promise<number[][]> {
-  // Voyage AI acepta hasta 100 textos por request
+  // Voyage AI accepts up to 100 texts per request
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: {
@@ -383,20 +383,20 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
     body: JSON.stringify({
       input: texts,
       model: 'voyage-3',
-      input_type: 'document',  // ← crucial: diferente de 'query' para búsqueda
+      input_type: 'document',  // critical: different from 'query' used at search time
     }),
   })
   const data = await res.json()
   return data.data.map((d: { embedding: number[] }) => d.embedding)
-  // Cada embedding es un vector de 1024 dimensiones (números float)
+  // Each embedding is a vector of 1024 float numbers
 }
 ```
 
-**¿Por qué overlap?** Imagina que un concepto importante está descrito en las últimas 2 líneas de un chunk y las primeras 2 del siguiente. Sin overlap, una búsqueda semántica sobre ese concepto podría recuperar fragmentos incompletos. Con overlap de 50 tokens, cada chunk "comparte" contexto con sus vecinos.
+**Why overlap?** Imagine an important concept is described in the last 2 lines of one chunk and the first 2 lines of the next. Without overlap, a semantic search for that concept might retrieve incomplete fragments. With a 50-token overlap, each chunk "shares" context with its neighbors.
 
 ---
 
-#### `src/lib/embeddings.ts` — Embeddings para queries
+#### `src/lib/embeddings.ts` — Embeddings for queries
 
 ```typescript
 export async function embed(text: string): Promise<number[]> {
@@ -405,41 +405,41 @@ export async function embed(text: string): Promise<number[]> {
     body: JSON.stringify({
       input: text,
       model: 'voyage-3',
-      input_type: 'query',   // ← Diferente de 'document' intencionalmente
+      input_type: 'query',   // intentionally different from 'document'
     }),
   })
   const data = await response.json()
-  return data.data[0].embedding  // Vector de 1024 dimensiones
+  return data.data[0].embedding  // 1024-dimensional vector
 }
 ```
 
-**¿Por qué `input_type` diferente?** Voyage AI tiene dos tipos de embeddings optimizados:
-- `"document"` — optimizado para indexar: maximiza la información semántica del contenido
-- `"query"` — optimizado para buscar: maximiza la similitud con documentos relevantes
+**Why different `input_type`?** Voyage AI provides two optimized embedding modes:
+- `"document"` — optimized for indexing: maximizes semantic information in the content
+- `"query"` — optimized for searching: maximizes similarity with relevant documents
 
-Sin esta distinción, los scores de similitud coseno eran ~0.25 independientemente de si el fragmento era relevante o no. Con la distinción, los fragmentos relevantes puntúan 0.5–0.8 y los irrelevantes quedan por debajo del umbral de 0.25.
+Without this distinction, cosine similarity scores were ~0.25 regardless of whether a chunk was relevant or not. With the distinction, relevant chunks score 0.5–0.8 and irrelevant ones fall below the 0.25 threshold.
 
 ---
 
-#### `src/app/api/chat/route.ts` — El cerebro del sistema
+#### `src/app/api/chat/route.ts` — The brain of the system
 
-La función `buildSystemPrompt` construye el prompt del sistema dinámicamente para cada query:
+The `buildSystemPrompt` function dynamically constructs the system prompt for each query:
 
 ```typescript
 function buildSystemPrompt(chunks: ChunkSearchResult[], memories: MemorySearchResult[]): string {
-  let prompt = `Eres un asistente personal de conocimiento. Responde basándote en los documentos del usuario.
-Si los documentos no cubren el tema, usa la herramienta search_web.
-Siempre cita los documentos como [filename p.N] al citar o parafrasear.`
+  let prompt = `You are a personal knowledge assistant. Answer questions based on the user's uploaded documents.
+If documents don't cover the topic, use the search_web tool.
+Always cite documents as [filename p.N] when quoting or paraphrasing.`
 
   if (memories.length > 0) {
-    // Inyectar memorias relevantes al principio del prompt
-    prompt += `\n\n## Lo que recuerdas de este usuario:\n`
+    // Inject relevant memories at the top of the prompt
+    prompt += `\n\n## What you remember about this user:\n`
     prompt += memories.map(m => `- ${m.content}`).join('\n')
   }
 
   if (chunks.length > 0) {
-    // Inyectar los fragmentos relevantes de los documentos
-    prompt += `\n\n## Contexto relevante de sus documentos:\n`
+    // Inject relevant document fragments
+    prompt += `\n\n## Relevant context from their documents:\n`
     prompt += chunks.map(c => `[${c.filename} p.${c.page_number}] ${c.content}`).join('\n\n')
   }
 
@@ -447,19 +447,19 @@ Siempre cita los documentos como [filename p.N] al citar o parafrasear.`
 }
 ```
 
-Las tres herramientas disponibles para el agente:
+The three tools available to the agent:
 
 ```typescript
 const tools = {
-  // Busca fragmentos adicionales si los recuperados automáticamente no son suficientes
+  // Searches for additional chunks if the automatically retrieved ones are insufficient
   search_documents: tool({
     description: "Search the user's uploaded documents for relevant information",
     inputSchema: z.object({ query: z.string() }),
     execute: async ({ query }) => {
-      const qEmb = await embed(query)  // Vectorizar la query
+      const qEmb = await embed(query)  // vectorize the query
       const { data } = await supabase.rpc('match_chunks', {
         query_embedding: qEmb,
-        match_threshold: 0.2,  // Umbral más bajo para búsqueda activa
+        match_threshold: 0.2,  // lower threshold for active search
         match_count: 5,
         p_session_id: sessionId,
       })
@@ -467,17 +467,17 @@ const tools = {
     },
   }),
 
-  // Fallback a internet cuando los documentos no cubren el tema
+  // Web fallback when documents don't cover the topic
   search_web: tool({
     description: 'Search the web when document context is insufficient',
     inputSchema: z.object({ query: z.string() }),
     execute: async ({ query }) => {
-      const results = await searchWeb(query)  // 3 resultados, 800 chars cada uno
+      const results = await searchWeb(query)  // 3 results, 800 chars each
       return results.map(r => `[${r.title}](${r.url})\n${r.snippet}`).join('\n\n')
     },
   }),
 
-  // El agente puede guardar hechos importantes proactivamente
+  // The agent can proactively save important facts
   save_memory: tool({
     description: 'Save an important fact about the user for future conversations',
     inputSchema: z.object({ fact: z.string() }),
@@ -487,7 +487,7 @@ const tools = {
         session_id: sessionId,
         content: fact,
         embedding: emb,
-        confidence: 0.9,  // Alta confianza cuando el agente lo guarda explícitamente
+        confidence: 0.9,  // high confidence when the agent saves it explicitly
       })
       return `Saved memory: "${fact}"`
     },
@@ -497,13 +497,13 @@ const tools = {
 
 ---
 
-#### `supabase/schema.sql` — La base de datos
+#### `supabase/schema.sql` — The database
 
 ```sql
--- Habilitar extensión de vectores
+-- Enable vector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Tabla de documentos subidos
+-- Table for uploaded documents
 CREATE TABLE documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id TEXT NOT NULL,
@@ -514,32 +514,32 @@ CREATE TABLE documents (
   uploaded_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de fragmentos con embeddings (el corazón del RAG)
+-- Table for text chunks with embeddings (the core of RAG)
 CREATE TABLE chunks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
   session_id TEXT NOT NULL,
   content TEXT NOT NULL,
-  embedding VECTOR(1024),   -- ← pgvector: vector de 1024 dimensiones (Voyage AI)
+  embedding VECTOR(1024),   -- pgvector: 1024-dimensional vector (Voyage AI)
   chunk_index INT NOT NULL,
   page_number INT NOT NULL
 );
 
--- Índice para búsqueda vectorial eficiente (HNSW = Hierarchical Navigable Small World)
+-- Index for efficient vector search (HNSW = Hierarchical Navigable Small World)
 CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops);
 
--- Tabla de memorias del usuario
+-- Table for user memories
 CREATE TABLE memories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id TEXT NOT NULL,
   content TEXT NOT NULL,
-  embedding VECTOR(1024),   -- vectorizada para búsqueda semántica
+  embedding VECTOR(1024),   -- vectorized for semantic search
   confidence FLOAT NOT NULL DEFAULT 0.9,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX ON memories USING hnsw (embedding vector_cosine_ops);
 
--- RPC para búsqueda semántica en chunks
+-- RPC for semantic search over chunks
 CREATE OR REPLACE FUNCTION match_chunks(
   query_embedding VECTOR(1024),
   match_threshold FLOAT,
@@ -551,7 +551,7 @@ LANGUAGE plpgsql AS $$
 BEGIN
   RETURN QUERY
   SELECT c.id, c.content, c.document_id, d.filename, c.page_number,
-         1 - (c.embedding <=> query_embedding) AS similarity   -- <=> es distancia coseno en pgvector
+         1 - (c.embedding <=> query_embedding) AS similarity   -- <=> is cosine distance in pgvector
   FROM chunks c
   JOIN documents d ON c.document_id = d.id
   WHERE c.session_id = p_session_id
@@ -561,7 +561,7 @@ BEGIN
 END;
 $$;
 
--- RPC para búsqueda semántica en memorias
+-- RPC for semantic search over memories
 CREATE OR REPLACE FUNCTION match_memories(
   query_embedding VECTOR(1024),
   match_threshold FLOAT,
@@ -583,84 +583,84 @@ END;
 $$;
 ```
 
-**¿Qué es pgvector?** Es una extensión de PostgreSQL que añade un tipo de dato `VECTOR(n)` y operadores matemáticos para calcular similitud entre vectores. El operador `<=>` calcula la distancia coseno entre dos vectores. `1 - distancia coseno = similitud coseno`. Los índices HNSW permiten hacer estas búsquedas eficientemente incluso con millones de vectores.
+**What is pgvector?** It is a PostgreSQL extension that adds a `VECTOR(n)` data type and mathematical operators to compute similarity between vectors. The `<=>` operator computes the cosine distance between two vectors. `1 - cosine distance = cosine similarity`. HNSW indexes make these searches efficient even with millions of vectors.
 
 ---
 
-#### `src/lib/session.ts` — Sesiones anónimas sin login
+#### `src/lib/session.ts` — Anonymous sessions without login
 
 ```typescript
 const SESSION_COOKIE = 'rag_session'
-const TTL_SECONDS = 24 * 60 * 60  // 24 horas
+const TTL_SECONDS = 24 * 60 * 60  // 24 hours
 
 export async function getOrCreateSessionId(): Promise<string> {
   const cookieStore = await cookies()
   const existing = cookieStore.get(SESSION_COOKIE)
-  if (existing?.value) return existing.value  // Sesión existente
-  return randomUUID()                          // Nueva sesión
+  if (existing?.value) return existing.value  // existing session
+  return randomUUID()                          // new session
 }
 
 export function sessionCookieOptions() {
   return {
     name: SESSION_COOKIE,
-    httpOnly: true,    // ← JavaScript del cliente NO puede leer esta cookie
-    sameSite: 'lax',  // Protección CSRF básica
+    httpOnly: true,    // client-side JavaScript CANNOT read this cookie
+    sameSite: 'lax',  // basic CSRF protection
     maxAge: TTL_SECONDS,
     path: '/',
   }
 }
 ```
 
-Cada usuario anónimo tiene un UUID como ID de sesión. Todos sus documentos, chunks y memorias están vinculados a ese `session_id`. La cookie es `HttpOnly` para prevenir que JavaScript malicioso la robe (protección XSS).
+Each anonymous user has a UUID as their session ID. All their documents, chunks, and memories are linked to that `session_id`. The cookie is `HttpOnly` to prevent malicious JavaScript from stealing it (XSS protection).
 
 ---
 
-### Cómo funciona la similitud vectorial
+### How vector similarity works
 
-Cuando buscas "algoritmo de backpropagation", esto es lo que pasa:
+When you search for "backpropagation algorithm", here is what happens:
 
 ```
-1. tu query → Voyage AI → vector de 1024 números
-   "algoritmo de backpropagation" → [0.23, -0.45, 0.12, 0.89, ..., -0.33]
+1. Your query → Voyage AI → 1024-number vector
+   "backpropagation algorithm" → [0.23, -0.45, 0.12, 0.89, ..., -0.33]
 
-2. Cada chunk en la base de datos también es un vector:
-   "La retropropagación calcula gradientes..." → [0.21, -0.43, 0.15, 0.87, ..., -0.31]
-   "Historia de las redes neuronales..."      → [-0.12, 0.34, -0.56, 0.23, ..., 0.45]
-   "Receta de pasta carbonara..."             → [-0.89, 0.12, 0.78, -0.34, ..., 0.67]
+2. Each chunk in the database is also a vector:
+   "Backpropagation computes gradients..." → [0.21, -0.43, 0.15, 0.87, ..., -0.31]
+   "History of neural networks..."         → [-0.12, 0.34, -0.56, 0.23, ..., 0.45]
+   "Pasta carbonara recipe..."             → [-0.89, 0.12, 0.78, -0.34, ..., 0.67]
 
-3. pgvector calcula la similitud coseno entre tu query y cada chunk:
-   "La retropropagación calcula gradientes..." → similitud: 0.82  ← muy relevante
-   "Historia de las redes neuronales..."       → similitud: 0.41  ← algo relevante
-   "Receta de pasta carbonara..."              → similitud: 0.05  ← irrelevante
+3. pgvector computes cosine similarity between your query and each chunk:
+   "Backpropagation computes gradients..." → similarity: 0.82  ← highly relevant
+   "History of neural networks..."         → similarity: 0.41  ← somewhat relevant
+   "Pasta carbonara recipe..."             → similarity: 0.05  ← irrelevant
 
-4. Solo los chunks con similitud > 0.25 se recuperan (top 5)
-5. Esos fragmentos se inyectan en el prompt del sistema
+4. Only chunks with similarity > 0.25 are retrieved (top 5)
+5. Those fragments are injected into the system prompt
 ```
 
-La "similitud coseno" mide el ángulo entre dos vectores. Vectores que apuntan en la misma dirección (mismo significado semántico) tienen similitud cercana a 1. Vectores perpendiculares (significado diferente) tienen similitud cercana a 0.
+Cosine similarity measures the angle between two vectors. Vectors pointing in the same direction (same semantic meaning) have similarity close to 1. Perpendicular vectors (different meaning) have similarity close to 0.
 
 ---
 
-## Stack tecnológico
+## Tech stack
 
-| Capa | Tecnología | ¿Por qué? |
-|------|-----------|-----------|
-| Framework | Next.js 16 App Router | Server Components, Route Handlers, deploy en Vercel |
-| AI SDK | Vercel AI SDK v6 | `generateText` con tools, `generateObject` para extracción de memoria |
-| Modelo chat | `claude-sonnet-4.6` | Mejor en RAG y seguimiento de instrucciones de citación |
-| Modelo memoria | `claude-haiku-4.5` | Extracción de hechos es tarea mecánica, Haiku es suficiente |
-| Gateway | Vercel AI Gateway | Una sola API key para ambos modelos |
-| Embeddings | Voyage AI `voyage-3` | 1024 dims, diferenciación `input_type` document/query, alta calidad |
-| Vector DB | Supabase pgvector | Búsqueda vectorial con PostgreSQL, índices HNSW, RPCs SQL |
-| Storage | Vercel Blob (private) | Almacenamiento de PDFs originales con acceso autenticado |
-| Web search | Exa AI | Devuelve texto limpio directamente |
-| Sesiones | Cookie HttpOnly | Sin login, aislamiento por session_id, 24h TTL |
+| Layer | Technology | Why |
+|-------|------------|-----|
+| Framework | Next.js 16 App Router | Server Components, Route Handlers, deploy on Vercel |
+| AI SDK | Vercel AI SDK v6 | `generateText` with tools, `generateObject` for memory extraction |
+| Chat model | `claude-sonnet-4.6` | Best at RAG and following citation instructions |
+| Memory model | `claude-haiku-4.5` | Fact extraction is a mechanical task; Haiku is sufficient |
+| Gateway | Vercel AI Gateway | Single API key for both models |
+| Embeddings | Voyage AI `voyage-3` | 1024 dims, `input_type` document/query differentiation, high quality |
+| Vector DB | Supabase pgvector | Vector search with PostgreSQL, HNSW indexes, SQL RPCs |
+| Storage | Vercel Blob (private) | Storage for original PDFs with authenticated access |
+| Web search | Exa AI | Returns clean text content directly |
+| Sessions | HttpOnly Cookie | No login, isolation by session_id, 24h TTL |
 | Styling | Tailwind v4 | |
 | Deploy | Vercel Hobby | |
 
 ---
 
-## Setup local
+## Local setup
 
 ```bash
 git clone https://github.com/NeryC/rag-agent-memory
@@ -668,35 +668,35 @@ cd rag-agent-memory
 npm install
 ```
 
-### 1. Crear proyecto en Supabase
+### 1. Create a Supabase project
 
-1. Ve a [supabase.com](https://supabase.com) → crea un proyecto
-2. En el dashboard: Database → Extensions → busca "vector" → actívala
-3. Ve a SQL Editor y ejecuta todo el contenido de `supabase/schema.sql`
+1. Go to [supabase.com](https://supabase.com) and create a project
+2. In the dashboard: Database → Extensions → search "vector" → enable it
+3. Go to SQL Editor and run the full contents of `supabase/schema.sql`
 
-### 2. Configurar variables de entorno
+### 2. Configure environment variables
 
-Crea `.env.local`:
+Create `.env.local`:
 
 ```env
-AI_GATEWAY_API_KEY=tu_clave_de_vercel_ai_gateway
-VOYAGE_API_KEY=tu_clave_de_voyage_ai
-EXA_API_KEY=tu_clave_de_exa
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
-BLOB_READ_WRITE_TOKEN=tu_token_de_vercel_blob
+AI_GATEWAY_API_KEY=your_vercel_ai_gateway_key
+VOYAGE_API_KEY=your_voyage_ai_key
+EXA_API_KEY=your_exa_key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+BLOB_READ_WRITE_TOKEN=your_vercel_blob_token
 ```
 
-| Variable | Dónde conseguirla |
-|----------|-------------------|
+| Variable | Where to get it |
+|----------|-----------------|
 | `AI_GATEWAY_API_KEY` | Vercel dashboard → AI Gateway → API Keys |
 | `VOYAGE_API_KEY` | [dash.voyageai.com](https://dash.voyageai.com) |
 | `EXA_API_KEY` | [dashboard.exa.ai](https://dashboard.exa.ai) |
 | `SUPABASE_URL` | Supabase dashboard → Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → Settings → API → service_role |
-| `BLOB_READ_WRITE_TOKEN` | Vercel dashboard → Storage → Blob → tu store → Tokens |
+| `BLOB_READ_WRITE_TOKEN` | Vercel dashboard → Storage → Blob → your store → Tokens |
 
-### 3. Ejecutar
+### 3. Run
 
 ```bash
 npm run dev    # → http://localhost:3000
@@ -705,44 +705,44 @@ npm test       # → unit tests
 
 ---
 
-## Decisiones técnicas explicadas
+## Technical decisions explained
 
-### Parser PDF sin dependencias (`zlib` built-in)
+### Zero-dependency PDF parser (built-in `zlib`)
 
-Las librerías populares como `pdf-parse` (que usa `pdfjs-dist` internamente) fallan en Vercel serverless con el error `DOMMatrix is not defined`. Esto es porque `pdfjs-dist` fue diseñada para correr en el browser y usa APIs del DOM que no existen en Node.js.
+Popular libraries like `pdf-parse` (which internally uses `pdfjs-dist`) fail on Vercel serverless with the error `DOMMatrix is not defined`. This is because `pdfjs-dist` was designed to run in the browser and uses DOM APIs that do not exist in Node.js.
 
-La solución: escribir un extractor desde cero usando únicamente `zlib` (built-in de Node.js) para descomprimir los streams FlateDecode, y regex para extraer los operadores de texto PDF (`Tj`, `TJ`). Sin `npm install`, sin dependencias del browser, funciona en cualquier entorno Node.js.
+The solution: write an extractor from scratch using only `zlib` (Node.js built-in) to decompress FlateDecode streams, and regex to extract PDF text operators (`Tj`, `TJ`). No `npm install`, no browser dependencies, works in any Node.js environment.
 
-### Ingestión sincrónica (solución al límite de 10s de Vercel Hobby)
+### Synchronous ingestion (solution to Vercel Hobby's 10s limit)
 
-El plan Hobby de Vercel tiene un límite duro de 10 segundos por función serverless. `maxDuration = 60` en el código simplemente se ignora. La solución original usaba `after()` para ejecutar la ingestión en background, pero también expiraba.
+Vercel's Hobby plan has a hard limit of 10 seconds per serverless function. `maxDuration = 60` in the code is simply ignored. The original solution used `after()` to run ingestion in background, but that also expired.
 
-La solución: ejecutar toda la ingestión (download → extract → chunk → embed → store) de forma sincrónica dentro del route handler `/api/upload`. Para PDFs típicos de 1-10 páginas, esto completa en 2-5 segundos. El cliente recibe `status: 'ready'` directamente en la respuesta.
+The solution: run the entire ingestion pipeline (download → extract → chunk → embed → store) synchronously inside the `/api/upload` route handler. For typical 1–10 page PDFs, this completes in 2–5 seconds. The client receives `status: 'ready'` directly in the response.
 
-### Diferenciación `input_type` de Voyage AI
+### Voyage AI `input_type` differentiation
 
-Sin especificar `input_type`, los scores de similitud coseno eran ~0.25 para cualquier par (query, chunk), independientemente de la relevancia real. Con `input_type: "document"` para ingestión e `input_type: "query"` para búsqueda, los pares relevantes puntúan 0.5-0.8 y los irrelevantes quedan por debajo del umbral de 0.25. Este cambio de una línea transformó el sistema de "siempre devuelve cualquier fragmento" a "solo devuelve fragmentos realmente relevantes".
+Without specifying `input_type`, cosine similarity scores were ~0.25 for any (query, chunk) pair regardless of actual relevance. With `input_type: "document"` for ingestion and `input_type: "query"` for search, relevant pairs score 0.5–0.8 and irrelevant ones fall below the 0.25 threshold. This one-line change transformed the system from "always returns some random chunk" to "only returns truly relevant chunks".
 
-### Sistema de memoria dual
+### Dual memory system
 
-**Memoria a corto plazo:** Los top-5 chunks más similares semánticamente se inyectan en el prompt del sistema para cada query. Desaparecen cuando termina la conversación.
+**Short-term memory:** The top-5 most semantically similar chunks are injected into the system prompt for each query. They disappear when the conversation ends.
 
-**Memoria a largo plazo:** Después de cada respuesta, `claude-haiku-4.5` analiza la conversación y extrae hechos duraderos (`confidence > 0.7`). Estos hechos se vectorizan y se guardan en la tabla `memories`. En la próxima sesión, los top-3 recuerdos más relevantes para la query actual se inyectan en el prompt — el agente sabe quién eres sin que tengas que repetírtelo.
+**Long-term memory:** After each response, `claude-haiku-4.5` analyzes the conversation and extracts durable facts (`confidence > 0.7`). These facts are vectorized and stored in the `memories` table. In the next session, the top-3 memories most relevant to the current query are injected into the prompt — the agent knows who you are without you having to repeat yourself.
 
-### Aislamiento de sesión sin autenticación
+### Session isolation without authentication
 
-Cada usuario anónimo recibe un UUID de sesión en una cookie HttpOnly. No hay login, no hay registro. Todos los documentos, chunks y memorias están vinculados a ese `session_id`. Un cron diario elimina sesiones más antiguas de 24 horas. Esto proporciona aislamiento significativo (usuarios no pueden ver los documentos de otros) sin ninguna fricción de autenticación.
+Each anonymous user receives a session UUID in an HttpOnly cookie. No login, no registration. All documents, chunks, and memories are linked to that `session_id`. A daily cron deletes sessions older than 24 hours. This provides meaningful isolation (users cannot see each other's documents) without any authentication friction.
 
 ---
 
-## Límites
+## Limits
 
-| Límite | Valor | Razón |
-|--------|-------|-------|
-| Documentos por sesión | 5 | Proteger costos de embedding y storage |
-| Duración de sesión | 24 horas | Datos borrados automáticamente |
-| Tamaño de chunk | ~500 tokens | Balance entre contexto y precisión de búsqueda |
-| Chunks recuperados | top-5 por query | Mantener prompts dentro del presupuesto |
-| Memorias recuperadas | top-3 por query | Evitar "ruido" de memorias irrelevantes |
-| Rate limit Voyage AI | Tier gratuito (limitado RPM) | Solo para demo |
-| Tiempo máximo upload | 10s | Límite duro de Vercel Hobby |
+| Limit | Value | Reason |
+|-------|-------|--------|
+| Documents per session | 5 | Protect embedding and storage costs |
+| Session duration | 24 hours | Data deleted automatically |
+| Chunk size | ~500 tokens | Balance between context and search precision |
+| Chunks retrieved | top-5 per query | Keep prompts within budget |
+| Memories retrieved | top-3 per query | Avoid "noise" from irrelevant memories |
+| Voyage AI rate limit | Free tier (limited RPM) | Demo only |
+| Max upload time | 10s | Vercel Hobby hard limit |
