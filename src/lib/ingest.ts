@@ -117,8 +117,9 @@ export async function processDocument(
 
   try {
     // Download PDF from Vercel Blob using the SDK (required for private blobs)
-    const { blob: blobData } = await get(blobUrl, { access: 'private' })
-    const pdfBuffer = Buffer.from(await blobData.arrayBuffer())
+    const blobResult = await get(blobUrl, { access: 'private' })
+    if (!blobResult) throw new Error(`Blob not found: ${blobUrl}`)
+    const pdfBuffer = Buffer.from(await new Response(blobResult.stream).arrayBuffer())
     const fullText = extractPdfText(pdfBuffer)
 
     if (!fullText || fullText.length < 10) {
