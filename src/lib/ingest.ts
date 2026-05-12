@@ -93,7 +93,7 @@ function chunkText(pages: { pageNum: number; text: string }[]): { content: strin
   return chunks
 }
 
-async function embedBatch(texts: string[]): Promise<number[][]> {
+async function embedBatch(texts: string[], attempt = 0): Promise<number[][]> {
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: {
@@ -102,6 +102,14 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
     },
     body: JSON.stringify({ input: texts, model: 'voyage-3', input_type: 'document' }),
   })
+
+  if (res.status === 429 && attempt < 4) {
+    const retryAfter = Number(res.headers.get('retry-after') ?? 0)
+    const waitMs = retryAfter > 0 ? retryAfter * 1000 : Math.min(2 ** attempt * 5000, 60000)
+    await new Promise(r => setTimeout(r, waitMs))
+    return embedBatch(texts, attempt + 1)
+  }
+
   if (!res.ok) throw new Error(`Voyage AI error: ${res.status} ${await res.text()}`)
   const data = await res.json()
   return data.data.map((d: { embedding: number[] }) => d.embedding)
