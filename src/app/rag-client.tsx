@@ -51,6 +51,7 @@ export function RagClient() {
           <DocumentUploader
             documents={documents}
             onUpload={doc => setDocuments(prev => [...prev, doc])}
+            onDelete={id => setDocuments(prev => prev.filter(d => d.id !== id))}
           />
         </div>
         <div className="shrink-0 p-3 border-t text-xs text-muted-foreground text-center">

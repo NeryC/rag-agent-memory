@@ -1,18 +1,30 @@
 'use client'
 import { useState, useCallback, useRef } from 'react'
-import { Upload, FileText, CheckCircle, Loader2, AlertCircle, Files } from 'lucide-react'
+import { Upload, FileText, CheckCircle, Loader2, AlertCircle, Files, Trash2 } from 'lucide-react'
 import type { Document } from '@/lib/types'
 
 interface DocumentUploaderProps {
   documents: Document[]
   onUpload: (doc: Document) => void
+  onDelete: (id: string) => void
 }
 
-export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps) {
+export function DocumentUploader({ documents, onUpload, onDelete }: DocumentUploaderProps) {
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDelete = useCallback(async (id: string) => {
+    setDeletingId(id)
+    try {
+      await fetch(`/api/document/${id}`, { method: 'DELETE' })
+      onDelete(id)
+    } finally {
+      setDeletingId(null)
+    }
+  }, [onDelete])
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -145,6 +157,17 @@ export function DocumentUploader({ documents, onUpload }: DocumentUploaderProps)
               {doc.status === 'processing' && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />}
               {doc.status === 'ready' && <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-500" />}
               {doc.status === 'error' && <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" />}
+              {doc.status !== 'processing' && (
+                <button
+                  onClick={e => { e.stopPropagation(); handleDelete(doc.id) }}
+                  disabled={deletingId === doc.id}
+                  className="ml-1 shrink-0 text-muted-foreground/50 hover:text-destructive transition-colors"
+                >
+                  {deletingId === doc.id
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Trash2 className="h-3.5 w-3.5" />}
+                </button>
+              )}
             </li>
           ))}
         </ul>
