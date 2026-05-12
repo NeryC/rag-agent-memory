@@ -48,7 +48,18 @@ export async function POST(req: NextRequest) {
     // Runs before response so Hobby plan 10s window covers everything for small PDFs
     await processDocument(blob.url, file.name, doc.id, sessionId)
 
-    const response = NextResponse.json({ document_id: doc.id, status: 'ready' })
+    // Re-fetch the actual status and chunk_count set by processDocument
+    const { data: finalDoc } = await supabase
+      .from('documents')
+      .select('status, chunk_count')
+      .eq('id', doc.id)
+      .single()
+
+    const response = NextResponse.json({
+      document_id: doc.id,
+      status: finalDoc?.status ?? 'ready',
+      chunk_count: finalDoc?.chunk_count ?? 0,
+    })
     const opts = sessionCookieOptions()
     response.cookies.set(opts.name, sessionId, opts)
     return response

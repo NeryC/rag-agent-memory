@@ -1,10 +1,10 @@
 import { createServerClient } from '@/lib/supabase'
+import { get } from '@vercel/blob'
 import { inflateSync } from 'zlib'
 
 const CHUNK_TOKENS = 500
 const OVERLAP_TOKENS = 50
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY!
-const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN ?? ''
 
 /**
  * Extract text from a PDF buffer.
@@ -116,19 +116,14 @@ export async function processDocument(
   const supabase = createServerClient()
 
   try {
-    // Download PDF from Vercel Blob (private store requires auth)
-    const headers: Record<string, string> = {}
-    if (BLOB_READ_WRITE_TOKEN) headers['Authorization'] = `Bearer ${BLOB_READ_WRITE_TOKEN}`
-    const blobRes = await fetch(blobUrl, { headers })
-    if (!blobRes.ok) throw new Error(`Blob fetch failed: ${blobRes.status}`)
-
-    const pdfBuffer = Buffer.from(await blobRes.arrayBuffer())
+    // Download PDF from Vercel Blob using the SDK (required for private blobs)
+    const { blob: blobData } = await get(blobUrl, { access: 'private' })
+    const pdfBuffer = Buffer.from(await blobData.arrayBuffer())
     const fullText = extractPdfText(pdfBuffer)
 
     if (!fullText || fullText.length < 10) {
-      console.error(`[ingest] No text extracted from ${filename} (${pdfBuffer.length} bytes)`)
       await supabase.from('documents').update({ status: 'error' }).eq('id', documentId)
-      return
+      throw new Error(`No readable text found in "${filename}". The PDF may be image-based or encrypted.`)
     }
 
     const pages = [{ pageNum: 1, text: fullText }]
@@ -136,7 +131,7 @@ export async function processDocument(
 
     if (chunks.length === 0) {
       await supabase.from('documents').update({ status: 'error' }).eq('id', documentId)
-      return
+      throw new Error(`Could not split "${filename}" into chunks.`)
     }
 
     // Embed in batches of 100
